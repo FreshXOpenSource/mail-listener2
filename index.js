@@ -75,6 +75,9 @@ function parseUnread() {
         parser.on("end", function(mail) {
           self.emit('mail',mail);
         });
+        parser.on('attachment', function(attachment) {
+          self.emit('attachment', attachment)
+        })
         msg.on('body', function(stream, info) {
           stream.pipe(parser);
         });
