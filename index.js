@@ -21,8 +21,8 @@ function MailListener(options) {
     tlsOptions: options.tlsOptions || {}
   });
   
-  this.imap.once('ready', imapReady.bind(this));
-  this.imap.once('close', imapClose.bind(this));
+  this.imap.on('ready', imapReady.bind(this));
+  this.imap.on('close', imapClose.bind(this));
   this.imap.on('error', imapError.bind(this));
 }
 
