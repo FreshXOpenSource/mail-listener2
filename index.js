@@ -83,10 +83,10 @@ function parseUnread() {
               callback();
             }
           });
-          msg.on('body', function(stream, info) {
+          msg.once('body', function(stream, info) {
             stream.pipe(parser);
           });
-          msg.on('attributes', function(attrs) {
+          msg.once('attributes', function(attrs) {
             attributes = attrs
             if(mail) {
               self.emit('mail', mail, attributes);
