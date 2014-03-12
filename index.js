@@ -1,5 +1,6 @@
 var Imap = require('imap');
 var util = require('util');
+var async = require('async');
 var EventEmitter = require('events').EventEmitter;
 var MailParser = require("mailparser").MailParser;
 
@@ -69,29 +70,34 @@ function parseUnread() {
     if (err) {
       self.emit('error',err);
     } else if(results.length > 0) {
-      var f = self.imap.fetch(results, { bodies: '', markSeen: self.markSeen });
-      f.on('message', function(msg, seqno) {
-        var parser = new MailParser(self.mailParserOptions);
-        var mail
-        var attributes
-        parser.on("end", function(m) {
-          mail = m
-          if(attributes) {
-            self.emit('mail', mail, attributes);
-          }
+      async.eachSeries(results, function(uid, callback){
+        var f = self.imap.fetch(uid, { bodies: '', markSeen: self.markSeen });
+        f.on('message', function(msg, seqno) {
+          var parser = new MailParser(self.mailParserOptions);
+          var mail
+          var attributes
+          parser.on("end", function(m) {
+            mail = m
+            if(attributes) {
+              self.emit('mail', mail, attributes);
+              callback();
+            }
+          });
+          msg.on('body', function(stream, info) {
+            stream.pipe(parser);
+          });
+          msg.on('attributes', function(attrs) {
+            attributes = attrs
+            if(mail) {
+              self.emit('mail', mail, attributes);
+              callback();
+            }
+          })
         });
-        msg.on('body', function(stream, info) {
-          stream.pipe(parser);
+        f.once('error', function(err) {
+          self.emit('error',err);
+          callback();
         });
-        msg.on('attributes', function(attrs) {
-          attributes = attrs
-          if(mail) {
-            self.emit('mail', mail, attributes);
-          }
-        })
-      });
-      f.once('error', function(err) {
-        self.emit('error',err);
       });
     }
   });
