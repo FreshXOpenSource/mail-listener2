@@ -72,12 +72,23 @@ function parseUnread() {
       var f = self.imap.fetch(results, { bodies: '', markSeen: self.markSeen });
       f.on('message', function(msg, seqno) {
         var parser = new MailParser(self.mailParserOptions);
-        parser.on("end", function(mail) {
-          self.emit('mail', mail, seqno);
+        var mail
+        var attributes
+        parser.on("end", function(m) {
+          mail = m
+          if(attributes) {
+            self.emit('mail', mail, attributes);
+          }
         });
         msg.on('body', function(stream, info) {
           stream.pipe(parser);
         });
+        msg.on('attributes', function(attrs) {
+          attributes = attrs
+          if(mail) {
+            self.emit('mail', mail, attributes);
+          }
+        })
       });
       f.once('error', function(err) {
         self.emit('error',err);
