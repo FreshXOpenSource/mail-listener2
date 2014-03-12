@@ -72,7 +72,7 @@ function parseUnread() {
     } else if(results.length > 0) {
       async.eachSeries(results, function(uid, callback){
         var f = self.imap.fetch([uid], { bodies: '', markSeen: self.markSeen });
-        f.on('message', function(msg, seqno) {
+        f.once('message', function(msg, seqno) {
           var parser = new MailParser(self.mailParserOptions);
           var mail
           var attributes
